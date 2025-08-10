@@ -182,7 +182,6 @@ vec4 render(vec2 uv, float time){
     }
     MapData md = map(pos);
     vec3 n = getNormal(pos);
-    float pattern = 0.;
     if(hit){
         vec2 luv = (md.localFaceUV - vec2(0.5))/0.5;
         float d = max(abs(luv.x),abs(luv.y));
@@ -191,9 +190,9 @@ vec4 render(vec2 uv, float time){
         float sn = sin(23.0*d-1.0);
         float br = smoothstep(0.8,0.95,sn) - smoothstep(0.85,0.9,min(d2,d3));
         br = max(0.,br);
-        float sub1 = smoothstep(0.75,0.79,abs(luv.x));
-        float sub2 = smoothstep(0.75,0.79,abs(luv.y));
-        float br2 = min(sub1,sub2) - smoothstep(0.93,0.98,d) + 0.5*smoothstep(0.9,0.95,d);
+        float sub1 = smoothstep(0.79,0.81,abs(luv.x));
+        float sub2 = smoothstep(0.79,0.81,abs(luv.y));
+        float br2 = min(sub1,sub2) - smoothstep(0.93,0.98,d) + 0.75*smoothstep(0.93,0.95,d);
         br = clamp(br+br2,0.,1.);
         //float br = smoothstep(0.9,0.95,d);
         vec3 col = vec3(br);
