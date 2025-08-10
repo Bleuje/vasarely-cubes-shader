@@ -14,7 +14,7 @@ public:
 
 	ofShader shader;
 
-	int numFrames = 165;
+	int numFrames = 250;
 
 	bool isExporting = false;
 	int currentFrame = 0;
