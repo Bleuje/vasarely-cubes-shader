@@ -3,6 +3,8 @@ out vec4 fragColor;
 
 uniform vec2 iResolution; // in pixels
 uniform float tt;         // in [0…1] loop
+uniform int   uQuality;     // 0=off(1spp), 1=4spp, 2=8spp, 3=16spp
+uniform float uRaySpreadPx; // sampling radius in *pixels* (e.g. 0.85)
 
 float t,t2;
 
@@ -204,10 +206,55 @@ vec4 render(vec2 uv, float time){
     return vec4(vec3(0.),1.0);
 }
 
+// hash for per-pixel pattern rotation (stable in time)
+float hash12(vec2 p){
+    p = fract(p * vec2(123.34, 345.45));
+    p += dot(p, p + 34.345);
+    return fract(p.x * p.y);
+}
+
+vec2 rot2(vec2 v, float a){
+    float c = cos(a), s = sin(a);
+    return vec2(c*v.x - s*v.y, s*v.x + c*v.y);
+}
+
+// Vogel (golden-angle) disk sample in *pixel* units, radius in pixels
+vec2 closeRayOffset(int i, int N, vec2 pixel, float radiusPx){
+    // golden angle
+    const float GA = 2.399963229728653f;
+    float seed = hash12(pixel);                 // per-pixel random rotation
+    float a = (float(i) + 0.5) * GA + seed*6.2831853;
+    float r = sqrt((float(i) + 0.5) / float(N)) * radiusPx;
+    return rot2(vec2(cos(a), sin(a)) * r, seed*6.2831853);
+}
+
+// Map quality → spp
+int qualityToSPP(int q){
+    if (q <= 0) return 1;
+    if (q == 1) return 4;
+    if (q == 2) return 8;
+    return 16; // q >= 3
+}
+
 void main() {
     float animationTime = tt;
-    vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-    fragColor = render(uv, animationTime);
+
+    // Base uv
+    vec2 uvBase = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+
+    int  spp = qualityToSPP(uQuality);
+    vec3 acc = vec3(0.0);
+
+    // Convert pixel offsets → uv: 1 px == 1 / iResolution.y in your uv convention
+    for (int i = 0; i < 16; ++i) {          // hard cap; break at spp
+        if (i >= spp) break;
+        vec2 offPx = closeRayOffset(i, spp, gl_FragCoord.xy, uRaySpreadPx);
+        vec2 uv    = uvBase + offPx / iResolution.y;
+        acc       += render(uv, animationTime).rgb;
+    }
+
+    vec3 col = acc / float(spp);
+    fragColor = vec4(col, 1.0);
 }
 
 

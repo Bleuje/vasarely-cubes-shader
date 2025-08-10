@@ -26,6 +26,9 @@ void ofApp::update()
     }
     shader.setUniform1f("tt", tNorm);
 
+    shader.setUniform1i("uQuality", 2); // 0=off(1spp), 1=4spp, 2=8spp, 3=16spp
+    shader.setUniform1f("uRaySpreadPx", 0.85f); //
+
     shader.setUniform1f("c", float(ofGetMouseY()) / ofGetWidth());
     shader.setUniform2f("center",
                         ofMap(ofGetMouseX(), 0, ofGetWidth(), -1, 1),
