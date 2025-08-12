@@ -143,8 +143,12 @@ MapData map(in vec3 pw){
     
     MapData wall2 = sdBox(p, vec3(0.5*L,0.5*L,0.001*L));
     wall2.type2 = 1;
+
+    MapData preRet = mdMin(mdMin(wall1,wall2),cube);
     
-    return mdMin(mdMin(wall1,wall2),cube);
+    //preRet.dist += 1.5*sin(0.1*pw.x + 0.33*pw.y + 0.15*pw.z + tt);
+
+    return preRet;
 }
 
 
@@ -172,7 +176,7 @@ vec4 render(vec2 uv, float time){
     vec3 pos;
     for(int i=0;i<150;i++){
         pos = ro + rd * dist;
-        float d = map(pos).dist;
+        float d = map(pos).dist*0.5;
         if(d < 0.001){
             hit = true;
             break;
@@ -192,6 +196,7 @@ vec4 render(vec2 uv, float time){
         br = max(0.,br);
         float sub1 = smoothstep(0.79,0.81,abs(luv.x));
         float sub2 = smoothstep(0.79,0.81,abs(luv.y));
+        float activator = pow(1-t2,10.0);
         float br2 = min(sub1,sub2) - smoothstep(0.93,0.98,d) + 0.75*smoothstep(0.93,0.95,d);
         br = clamp(br+br2,0.,1.);
         //float br = smoothstep(0.9,0.95,d);
@@ -236,7 +241,7 @@ int qualityToSPP(int q){
 }
 
 void main() {
-    float animationTime = tt;
+    float animationTime = mod(tt+0.25,1.0);
 
     // Base uv
     vec2 uvBase = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
@@ -249,7 +254,7 @@ void main() {
         if (i >= spp) break;
         vec2 offPx = closeRayOffset(i, spp, gl_FragCoord.xy, uRaySpreadPx);
         vec2 uv    = uvBase + offPx / iResolution.y;
-        acc       += render(uv, animationTime).rgb;
+        acc       += render(uv, animationTime - 0.09*length(uvBase)-0*0.04*uvBase.x).rgb;
     }
 
     vec3 col = acc / float(spp);
